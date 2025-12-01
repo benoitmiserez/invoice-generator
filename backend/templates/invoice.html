@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #000;
+            padding: 40px;
+            margin: 0;
+        }
+        .header {
+            margin-bottom: 40px;
+        }
+        .brand-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .invoice-info {
+            text-align: right;
+        }
+        .invoice-info h3 {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+        .invoice-info p {
+            margin: 5px 0;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h3 {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .section p {
+            margin: 3px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th {
+            text-align: left;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 10px;
+            border-bottom: 2px solid #000;
+        }
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        table th:not(:first-child),
+        table td:not(:first-child) {
+            text-align: right;
+        }
+        .group-header {
+            font-weight: bold;
+            background-color: #f5f5f5;
+            border-bottom: 2px solid #000;
+        }
+        .group-header td {
+            padding: 8px 10px;
+            border-bottom: 2px solid #000;
+        }
+        .total-section {
+            margin-top: 30px;
+            text-align: right;
+        }
+        .total-section h2 {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .total-amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 50px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .footer-section h3 {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .footer-section p {
+            margin: 3px 0;
+        }
+        .legal-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand-name">{{ brand_name }}</div>
+        
+        <div class="invoice-header">
+            <div></div>
+            <div class="invoice-info">
+                <h3>INVOICE #</h3>
+                <p>{{ invoice_number }}</p>
+                <h3>DATE</h3>
+                <p>{{ date }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>ISSUED TO</h3>
+        <p>{{ party.company_name }}</p>
+        {% if party.contact_person %}
+        <p>To the attention of {{ party.contact_person }}</p>
+        {% endif %}
+        {% if party.address %}
+        <p>{{ party.address }}</p>
+        {% endif %}
+        {% if party.city %}
+        <p>{{ party.city }}</p>
+        {% endif %}
+        {% if party.vat_number %}
+        <p>{{ party.vat_number }}</p>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>DESCRIPTION</th>
+                <th>RATE</th>
+                <th>QTY</th>
+                <th>UNIT</th>
+                <th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in line_items %}
+                {% if item.is_group_header %}
+                    <tr class="group-header">
+                        <td colspan="5">{{ item.group_name }}</td>
+                    </tr>
+                    {% for sub_item in item['items'] %}
+                    <tr>
+                        <td>{{ sub_item.description }}</td>
+                        <td>€{{ sub_item.rate }}</td>
+                        <td>{{ sub_item.quantity }}</td>
+                        <td>{{ sub_item.unit }}</td>
+                        <td>€{{ sub_item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td>€{{ item.rate }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit }}</td>
+                        <td>€{{ item.total }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <h2>TOTAL</h2>
+        <div class="total-amount">€ {{ total }}</div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-section">
+            <div class="legal-name">{{ config.legal_name }}</div>
+            {% if config.siret %}
+            <h3>SIRET</h3>
+            <p>{{ config.siret }}</p>
+            {% endif %}
+            {% if config.phone %}
+            <h3>PHONE</h3>
+            <p>{{ config.phone }}</p>
+            {% endif %}
+            {% if config.email %}
+            <h3>EMAIL</h3>
+            <p>{{ config.email }}</p>
+            {% endif %}
+            {% if config.address %}
+            <h3>POSTAL ADDRESS</h3>
+            <p>{{ config.address }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="footer-section">
+            {% if config.iban or config.bic %}
+            <h3>PAYMENT BY BANK TRANSFER</h3>
+            {% if config.iban %}
+            <p>IBAN: {{ config.iban }}</p>
+            {% endif %}
+            {% if config.bic %}
+            <p>BIC: {{ config.bic }}</p>
+            {% endif %}
+            {% endif %}
+            <h3>PAYMENT TERM</h3>
+            <p>{{ payment_term }}</p>
+        </div>
+    </div>
+
+    {% if config.vat_note %}
+    <div style="margin-top: 30px; text-align: center; font-size: 10px;">
+        <p>{{ config.vat_note }}</p>
+    </div>
+    {% endif %}
+</body>
+</html>
+
