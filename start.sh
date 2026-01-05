@@ -14,10 +14,12 @@ fi
 
 # Start backend
 echo "Starting backend server..."
+echo "Note: If this is your first time or your token expired, a browser window"
+echo "will open for Google Drive authentication. If it doesn't, check backend.log"
 cd backend
 source venv/bin/activate
 pip install -q -r requirements.txt 2>/dev/null || pip install -r requirements.txt
-uvicorn main:app --reload --port 8000 > /dev/null 2>&1 &
+uvicorn main:app --reload --port 8000 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
@@ -26,15 +28,15 @@ sleep 3
 
 # Check if backend started successfully
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "Error: Backend failed to start. Check backend logs."
+    echo "Error: Backend failed to start. Check backend.log for details."
     exit 1
 fi
 
 # Start frontend
-echo "Starting frontend server..."
+echo "Starting frontend server (logs in frontend.log)..."
 cd frontend
 npm install --silent 2>/dev/null || npm install
-npm run dev > /dev/null 2>&1 &
+npm run dev > ../frontend.log 2>&1 &
 FRONTEND_PID=$!
 cd ..
 

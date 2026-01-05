@@ -21,6 +21,20 @@ from google_drive import upload_to_drive, upload_file_to_invoice_folder
 async def lifespan(app: FastAPI):
     # Startup
     init_db()
+    
+    # Try to initialize Google Drive credentials on startup
+    # This will either use the existing token or trigger the auth flow
+    try:
+        from google_drive import get_credentials
+        print("Checking Google Drive credentials...")
+        get_credentials()
+        print("Google Drive credentials ready.")
+    except FileNotFoundError:
+        print("Google Drive credentials not found. Please place credentials.json in the credentials/ folder.")
+    except Exception as e:
+        print(f"Note: Google Drive authentication not completed on startup: {e}")
+        print("You will be prompted to authenticate when generating your first invoice.")
+        
     yield
     # Shutdown (if needed)
 
@@ -174,6 +188,27 @@ def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
         print(f"Error creating invoice: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error creating invoice: {str(e)}")
+
+@app.get("/api/drive/status")
+def get_drive_status():
+    """Check if Google Drive credentials are set up and working"""
+    try:
+        from google_drive import get_credentials
+        from googleapiclient.discovery import build
+        
+        creds = get_credentials()
+        if not creds or not creds.valid:
+            return {"status": "error", "message": "Credentials invalid or expired"}
+        
+        service = build('drive', 'v3', credentials=creds)
+        # Try a simple API call
+        service.about().get(fields="user").execute()
+        
+        return {"status": "ok", "message": "Google Drive connected"}
+    except FileNotFoundError as e:
+        return {"status": "error", "message": f"Credentials file not found: {str(e)}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/invoices/next-number")
 def get_next_invoice_number(db: Session = Depends(get_db)):

@@ -136,17 +136,17 @@ def upload_to_drive(pdf_bytes: bytes, filename: str, client_name: str, invoice_n
     media = MediaIoBaseUpload(
         BytesIO(pdf_bytes),
         mimetype='application/pdf',
-        resumable=True
+        resumable=False
     )
     
     file = service.files().create(
         body=file_metadata,
         media_body=media,
-        fields='id, webViewLink'
+        fields='id, webViewLink, webContentLink'
     ).execute()
     
     file_id = file.get('id')
-    file_url = file.get('webViewLink')
+    file_url = file.get('webContentLink') or file.get('webViewLink')
     
     return file_id, file_url, invoice_folder_id
 
@@ -182,17 +182,17 @@ def upload_file_to_invoice_folder(folder_id: str, file_bytes: bytes, filename: s
     media = MediaIoBaseUpload(
         BytesIO(file_bytes),
         mimetype=mime_type,
-        resumable=True
+        resumable=False
     )
     
     file = service.files().create(
         body=file_metadata,
         media_body=media,
-        fields='id, webViewLink'
+        fields='id, webViewLink, webContentLink'
     ).execute()
     
     file_id = file.get('id')
-    file_url = file.get('webViewLink')
+    file_url = file.get('webContentLink') or file.get('webViewLink')
     
     return file_id, file_url
 

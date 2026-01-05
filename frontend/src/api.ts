@@ -99,3 +99,6 @@ export const uploadInvoiceFile = (invoiceId: number, file: File) => {
 export const getConfig = () => api.get<Config>('/api/config');
 export const updateConfig = (data: Config) => api.put<Config>('/api/config', data);
 
+// Drive API
+export const getDriveStatus = () => api.get<{ status: string; message: string }>('/api/drive/status');
+

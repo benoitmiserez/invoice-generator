@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getConfig, updateConfig, type Config } from '../api';
+import { getConfig, updateConfig, getDriveStatus, type Config } from '../api';
 
 export default function Settings() {
   const [config, setConfig] = useState<Config>({
@@ -9,9 +9,12 @@ export default function Settings() {
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [driveStatus, setDriveStatus] = useState<{ status: string; message: string } | null>(null);
+  const [checkingDrive, setCheckingDrive] = useState(false);
 
   useEffect(() => {
     loadConfig();
+    checkDrive();
   }, []);
 
   const loadConfig = async () => {
@@ -20,6 +23,18 @@ export default function Settings() {
       setConfig(response.data);
     } catch (error) {
       console.error('Error loading config:', error);
+    }
+  };
+
+  const checkDrive = async () => {
+    setCheckingDrive(true);
+    try {
+      const response = await getDriveStatus();
+      setDriveStatus(response.data);
+    } catch (error) {
+      setDriveStatus({ status: 'error', message: 'Could not connect to backend' });
+    } finally {
+      setCheckingDrive(false);
     }
   };
 
@@ -51,6 +66,35 @@ export default function Settings() {
 
       <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6">
         <div className="space-y-6">
+          <div className="border-b pb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Google Drive Integration</h2>
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Status</p>
+                {checkingDrive ? (
+                  <p className="text-gray-500 italic">Checking...</p>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className={`w-3 h-3 rounded-full ${driveStatus?.status === 'ok' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p className={driveStatus?.status === 'ok' ? 'text-green-700' : 'text-red-700'}>
+                      {driveStatus?.message || 'Unknown status'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={checkDrive}
+                className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Refresh Status
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Note: If status is error, you may need to delete `credentials/token.pickle` and run the backend manually once to re-authenticate.
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Brand Name
