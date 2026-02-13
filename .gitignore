@@ -2,6 +2,6 @@
 **.db
 **.log
 **.venv
-**credentials/
+**credentials/**
 **pycache**
 
