@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getParties, createParty, createInvoice, getInvoice, getNextInvoiceNumber, uploadInvoiceFile, type Party, type PartyCreate, type InvoiceCreate } from '../api';
+import { unitOptions, rateOptions, groupNameOptions, descriptionSuggestionsByGroup } from '../config';
 
 export default function InvoiceForm() {
   const [parties, setParties] = useState<Party[]>([]);
@@ -11,11 +12,11 @@ export default function InvoiceForm() {
     address: '',
     city: '',
     vat_number: '',
+    payment_term: '',
   });
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [suggestedInvoiceNumber, setSuggestedInvoiceNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [paymentTerm, setPaymentTerm] = useState('');
   const [lineItems, setLineItems] = useState([
     { description: '', rate: 0, quantity: 0, unit: '', group_name: '' }
   ]);
@@ -58,6 +59,7 @@ export default function InvoiceForm() {
         address: '',
         city: '',
         vat_number: '',
+        payment_term: '',
       });
     } catch (error) {
       console.error('Error creating party:', error);
@@ -109,16 +111,11 @@ export default function InvoiceForm() {
     return [`${previousMonthName} ${previousYear}`];
   };
 
-  // Get description suggestions based on group name
+  // Get description suggestions based on group name (from env; empty list for a group = use dynamic previous month)
   const getDescriptionSuggestions = (groupName: string) => {
-    if (groupName === 'AI Engineering Services') {
-      return getMonthYearSuggestions();
-    } else if (groupName === 'Expenses') {
-      return [
-        'Two-way ticket City A - City B',
-        'One-way ticket City A - City B'
-      ];
-    }
+    const fromEnv = descriptionSuggestionsByGroup[groupName];
+    if (fromEnv && fromEnv.length > 0) return fromEnv;
+    if (groupName in descriptionSuggestionsByGroup) return getMonthYearSuggestions();
     return [];
   };
 
@@ -141,7 +138,6 @@ export default function InvoiceForm() {
         invoice_number: invoiceNumber,
         date: invoiceDate,
         party_id: selectedPartyId as number,
-        payment_term: paymentTerm,
         line_items: lineItems.map(item => ({
           description: item.description,
           rate: item.rate,
@@ -304,16 +300,19 @@ export default function InvoiceForm() {
                     <div className="col-span-12 mb-2">
                       <input
                         type="text"
-                        list={`group-name-${index}`}
-                        placeholder="Group Name (optional, e.g., 'AI Engineering Services')"
+                        list={groupNameOptions.length > 0 ? `group-name-${index}` : undefined}
+                        placeholder="Group Name (optional)"
                         value={item.group_name || ''}
                         onChange={(e) => handleLineItemChange(index, 'group_name', e.target.value)}
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                       />
-                      <datalist id={`group-name-${index}`}>
-                        <option value="AI Engineering Services" />
-                        <option value="Expenses" />
-                      </datalist>
+                      {groupNameOptions.length > 0 && (
+                        <datalist id={`group-name-${index}`}>
+                          {groupNameOptions.map((name) => (
+                            <option key={name} value={name} />
+                          ))}
+                        </datalist>
+                      )}
                       <p className="mt-1 text-xs text-gray-500">Items with the same group name will be grouped together in the invoice</p>
                     </div>
                   </div>
@@ -339,6 +338,7 @@ export default function InvoiceForm() {
                     <div className="col-span-2">
                       <input
                         type="number"
+                        list={rateOptions.length > 0 ? `rate-${index}` : undefined}
                         placeholder="Rate"
                         value={item.rate || ''}
                         onChange={(e) => handleLineItemChange(index, 'rate', parseFloat(e.target.value) || 0)}
@@ -347,6 +347,13 @@ export default function InvoiceForm() {
                         min="0"
                         step="0.01"
                       />
+                      {rateOptions.length > 0 && (
+                        <datalist id={`rate-${index}`}>
+                          {rateOptions.map((rate) => (
+                            <option key={rate} value={rate} />
+                          ))}
+                        </datalist>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <input
@@ -363,17 +370,20 @@ export default function InvoiceForm() {
                     <div className="col-span-2">
                       <input
                         type="text"
-                        list={`unit-${index}`}
+                        list={unitOptions.length > 0 ? `unit-${index}` : undefined}
                         placeholder="Unit"
                         value={item.unit}
                         onChange={(e) => handleLineItemChange(index, 'unit', e.target.value)}
                         className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         required
                       />
-                      <datalist id={`unit-${index}`}>
-                        <option value="days" />
-                        <option value="tickets" />
-                      </datalist>
+                      {unitOptions.length > 0 && (
+                        <datalist id={`unit-${index}`}>
+                          {unitOptions.map((unit) => (
+                            <option key={unit} value={unit} />
+                          ))}
+                        </datalist>
+                      )}
                     </div>
                     <div className="col-span-1">
                       <span className="text-gray-700 font-medium">
@@ -411,27 +421,6 @@ export default function InvoiceForm() {
               <p className="text-sm text-gray-600">Total</p>
               <p className="text-2xl font-bold text-gray-900">€{calculateTotal().toFixed(2)}</p>
             </div>
-          </div>
-
-          {/* Payment Term */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Payment Term
-            </label>
-            <input
-              type="text"
-              list="payment-term-suggestions"
-              placeholder="Payment Term"
-              value={paymentTerm}
-              onChange={(e) => setPaymentTerm(e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              required
-            />
-            <datalist id="payment-term-suggestions">
-              <option value="7 days" />
-              <option value="14 days" />
-              <option value="30 days" />
-            </datalist>
           </div>
 
           {/* File Attachments */}
@@ -538,6 +527,18 @@ export default function InvoiceForm() {
                   type="text"
                   value={newParty.vat_number}
                   onChange={(e) => setNewParty({ ...newParty, vat_number: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Term
+                </label>
+                <input
+                  type="text"
+                  value={newParty.payment_term || ''}
+                  onChange={(e) => setNewParty({ ...newParty, payment_term: e.target.value })}
+                  placeholder="e.g. 30 days"
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>

@@ -16,6 +16,7 @@ export interface Party {
   address?: string;
   city?: string;
   vat_number?: string;
+  payment_term?: string;
 }
 
 export interface PartyCreate {
@@ -24,6 +25,7 @@ export interface PartyCreate {
   address?: string;
   city?: string;
   vat_number?: string;
+  payment_term?: string;
 }
 
 export interface LineItem {
@@ -52,7 +54,6 @@ export interface InvoiceCreate {
   invoice_number: string;
   date: string;
   party_id: number;
-  payment_term: string;
   line_items: LineItem[];
 }
 
@@ -101,4 +102,3 @@ export const updateConfig = (data: Config) => api.put<Config>('/api/config', dat
 
 // Drive API
 export const getDriveStatus = () => api.get<{ status: string; message: string }>('/api/drive/status');
-

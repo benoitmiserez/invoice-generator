@@ -27,6 +27,7 @@ export default function PartyList() {
       address: party.address || '',
       city: party.city || '',
       vat_number: party.vat_number || '',
+      payment_term: party.payment_term || '',
     });
   };
 
@@ -76,6 +77,9 @@ export default function PartyList() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 VAT Number
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Payment Term
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -127,6 +131,15 @@ export default function PartyList() {
                         className="w-full rounded-md border-gray-300 shadow-sm"
                       />
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="text"
+                        value={editForm?.payment_term || ''}
+                        onChange={(e) => setEditForm({ ...editForm!, payment_term: e.target.value })}
+                        placeholder="e.g. 30 days"
+                        className="w-full rounded-md border-gray-300 shadow-sm"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleSave(party.id)}
@@ -161,6 +174,9 @@ export default function PartyList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {party.vat_number || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {party.payment_term || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

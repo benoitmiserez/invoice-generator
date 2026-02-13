@@ -11,6 +11,7 @@ class Party(Base):
     address = Column(String)
     city = Column(String)
     vat_number = Column(String)
+    payment_term = Column(String, default="30 days")
     
     invoices = relationship("Invoice", back_populates="party")
 

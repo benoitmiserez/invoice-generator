@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -24,4 +24,13 @@ def get_db():
 def init_db():
     """Initialize database tables"""
     Base.metadata.create_all(bind=engine)
+    # Migration: add payment_term to parties if missing (existing DBs)
+    with engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info(parties)"))
+        columns = [row[1] for row in result]
+        if "payment_term" not in columns:
+            conn.execute(text(
+                "ALTER TABLE parties ADD COLUMN payment_term VARCHAR DEFAULT '30 days'"
+            ))
+            conn.commit()
 

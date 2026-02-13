@@ -9,6 +9,7 @@ class PartyBase(BaseModel):
     address: Optional[str] = None
     city: Optional[str] = None
     vat_number: Optional[str] = None
+    payment_term: Optional[str] = "30 days"
 
 class PartyCreate(PartyBase):
     pass
@@ -37,14 +38,17 @@ class LineItem(LineItemBase):
     class Config:
         from_attributes = True
 
-# Invoice schemas
+# Invoice schemas (payment_term is set from party on create)
 class InvoiceBase(BaseModel):
     invoice_number: str
     date: date
     party_id: int
     payment_term: str = "30 days"
 
-class InvoiceCreate(InvoiceBase):
+class InvoiceCreate(BaseModel):
+    invoice_number: str
+    date: date
+    party_id: int
     line_items: List[LineItemCreate]
 
 class Invoice(InvoiceBase):

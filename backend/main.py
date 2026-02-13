@@ -112,9 +112,14 @@ def list_invoices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 @app.post("/api/invoices", response_model=InvoiceSchema)
 def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
     try:
-        # Create invoice
+        party = db.query(Party).filter(Party.id == invoice.party_id).first()
+        if not party:
+            raise HTTPException(status_code=404, detail="Party not found")
+        
+        # Create invoice (payment_term comes from client)
         invoice_data = invoice.model_dump()
         line_items_data = invoice_data.pop("line_items")
+        invoice_data["payment_term"] = party.payment_term or "30 days"
         
         db_invoice = Invoice(**invoice_data)
         db.add(db_invoice)
@@ -128,11 +133,6 @@ def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
         
         db.commit()
         db.refresh(db_invoice)
-        
-        # Load relationships
-        party = db.query(Party).filter(Party.id == db_invoice.party_id).first()
-        if not party:
-            raise HTTPException(status_code=404, detail="Party not found")
         
         # Reload invoice with relationships
         from sqlalchemy.orm import joinedload

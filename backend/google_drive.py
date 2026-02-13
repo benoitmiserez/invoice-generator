@@ -46,8 +46,19 @@ def get_credentials():
     # If there are no (valid) credentials available, let the user log in
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                # invalid_grant usually means token was revoked or expired beyond refresh
+                err_str = str(e).lower()
+                if "invalid_grant" in err_str or "token has been revoked" in err_str or "token expired" in err_str:
+                    if os.path.exists(token_path):
+                        os.remove(token_path)
+                    creds = None
+                else:
+                    raise
+
+        if not creds or not creds.valid:
             if not credentials_path:
                 raise FileNotFoundError(
                     f"Google credentials not found in {credentials_dir}. "
@@ -56,11 +67,11 @@ def get_credentials():
                 )
             flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
             creds = flow.run_local_server(port=0)
-        
+
         # Save the credentials for the next run
         with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
-    
+
     return creds
 
 def get_or_create_folder(service, folder_name, parent_id=None):
