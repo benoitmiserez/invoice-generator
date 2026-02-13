@@ -1,41 +1,7 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-.venv
-*.db
-*.sqlite
-*.sqlite3
-
-# Node
-node_modules/
-dist/
-*.log
-
-# Credentials
-credentials/
-*.pickle
-*.json
-!package.json
-!package-lock.json
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Environment
-.env
-.env.local
+**.env
+**.db
+**.log
+**.venv
+**credentials/
+**pycache**
 
