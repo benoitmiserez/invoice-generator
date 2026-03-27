@@ -133,11 +133,9 @@ export default function InvoiceHistory() {
                     ) : invoice.drive_file_url ? (
                       <a
                         href={invoice.drive_file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="text-indigo-600 hover:text-indigo-900"
                       >
-                        View PDF
+                        Download PDF
                       </a>
                     ) : (
                       <span className="text-gray-400">Not uploaded</span>

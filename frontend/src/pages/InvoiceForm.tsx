@@ -22,7 +22,7 @@ export default function InvoiceForm() {
   ]);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<{ message: string; url?: string } | null>(null);
+  const [success, setSuccess] = useState<{ message: string; url?: string; hasAttachments?: boolean } | null>(null);
 
   useEffect(() => {
     loadParties();
@@ -173,6 +173,7 @@ export default function InvoiceForm() {
       setSuccess({
         message: 'Invoice generated successfully!',
         url: driveUrl,
+        hasAttachments: attachedFiles.length > 0,
       });
 
       // Reset form
@@ -197,14 +198,23 @@ export default function InvoiceForm() {
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-green-800">{success.message}</p>
           {success.url ? (
-            <a
-              href={success.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-green-600 underline mt-2 inline-block mr-4"
-            >
-              View in Google Drive
-            </a>
+            success.hasAttachments ? (
+              <a
+                href={success.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 underline mt-2 inline-block mr-4"
+              >
+                Open Invoice Folder
+              </a>
+            ) : (
+              <a
+                href={success.url}
+                className="text-green-600 underline mt-2 inline-block mr-4"
+              >
+                Download Invoice
+              </a>
+            )
           ) : (
             <p className="text-yellow-700 text-sm mt-2">
               Note: Invoice created but not uploaded to Google Drive. Please check your Google Drive credentials setup.
